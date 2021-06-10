@@ -20,9 +20,6 @@ async function main() {
         .setIndex("date") // Index so we can later merge on date.
         .renameSeries({ date: "time" });
 
-    plot(inputSeries.tail(1800).toArray(),{chartType: "line"},{y:"close"}).renderImage("output/dataset.png");
-    console.log(">> " + "output/dataset.png");
-
     // The example data file is available in the 'data' sub-directory of this repo.
 
     console.log("Computing moving average indicator.");
@@ -34,7 +31,23 @@ async function main() {
 
     inputSeries = inputSeries
         .withSeries("sma", movingAverage)   // Integrate moving average into data, indexed on date.
-        .skip(30)                           // Skip blank sma entries.
+        .skip(30);                           // Skip blank sma entries.
+
+    const exma = inputSeries
+    .deflate(y => y.close)
+    .rsi(14);
+
+    const testseries = inputSeries
+    .withSeries("rsi", exma)
+    .skip(14);
+
+    testseries
+    .asCSV()
+    .writeFileSync("dataWithRSI.csv");
+
+    inputSeries
+    .asCSV()
+    .writeFileSync("dataWithSMA.csv");
 
     // This is a very simple and very naive mean reversion strategy:
     const strategy = {
@@ -89,7 +102,9 @@ async function main() {
     console.log(">> " + analysisOutputFilePath);
 
     console.log("Plotting...");
-
+    //Visualize Original Data
+    await plot(inputSeries.tail(60).toArray(),{chartType: "line"},{y:"close"}).renderImage("output/dataset.png");
+    console.log(">> " + "output/dataset.png");
     // Visualize the equity curve and drawdown chart for your backtest:
     const equityCurve = computeEquityCurve(startingCapital, trades);
     const equityCurveOutputFilePath = "output/my-equity-curve.png";
