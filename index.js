@@ -20,6 +20,9 @@ async function main() {
         .setIndex("date") // Index so we can later merge on date.
         .renameSeries({ date: "time" });
 
+    plot(inputSeries.tail(1800).toArray(),{chartType: "line"},{y:"close"}).renderImage("output/dataset.png");
+    console.log(">> " + "output/dataset.png");
+
     // The example data file is available in the 'data' sub-directory of this repo.
 
     console.log("Computing moving average indicator.");
@@ -90,25 +93,25 @@ async function main() {
     // Visualize the equity curve and drawdown chart for your backtest:
     const equityCurve = computeEquityCurve(startingCapital, trades);
     const equityCurveOutputFilePath = "output/my-equity-curve.png";
-    await plot(equityCurve, { chartType: "area", y: { label: "Equity $" }})
+    await plot(equityCurve, { chartType: "line", y: { label: "Equity $" }})
         .renderImage(equityCurveOutputFilePath);
     console.log(">> " + equityCurveOutputFilePath);
 
     const equityCurvePctOutputFilePath = "output/my-equity-curve-pct.png";
     const equityPct = equityCurve.map(v => ((v - startingCapital) / startingCapital) * 100);
-    await plot(equityPct, { chartType: "area", y: { label: "Equity %" }})
+    await plot(equityPct, { chartType: "line", y: { label: "Equity %" }})
         .renderImage(equityCurvePctOutputFilePath);
     console.log(">> " + equityCurvePctOutputFilePath);
 
     const drawdown = computeDrawdown(startingCapital, trades);
     const drawdownOutputFilePath = "output/my-drawdown.png";
-    await plot(drawdown, { chartType: "area", y: { label: "Drawdown $" }})
+    await plot(drawdown, { chartType: "line", y: { label: "Drawdown $" }})
         .renderImage(drawdownOutputFilePath);
     console.log(">> " + drawdownOutputFilePath);
 
     const drawdownPctOutputFilePath = "output/my-drawdown-pct.png";
     const drawdownPct = drawdown.map(v => (v / startingCapital) * 100);
-    await plot(drawdownPct, { chartType: "area", y: { label: "Drawdown %" }})
+    await plot(drawdownPct, { chartType: "line", y: { label: "Drawdown %" }})
         .renderImage(drawdownPctOutputFilePath);
     console.log(">> " + drawdownPctOutputFilePath);
 };
