@@ -13,9 +13,9 @@ async function main() {
 
     console.log("Loading and preparing data.");
 
-    let inputSeries = dataForge.readFileSync("data/STW.csv")
+    let inputSeries = dataForge.readFileSync("data/ETH-USD.csv")
         .parseCSV()
-        .parseDates("date", "D/MM/YYYY")
+        .parseDates("date", "YYYY-MM-D")
         .parseFloats(["open", "high", "low", "close", "volume"])
         .setIndex("date") // Index so we can later merge on date.
         .renameSeries({ date: "time" });
@@ -28,7 +28,7 @@ async function main() {
     const movingAverage = inputSeries
         .deflate(bar => bar.close)          // Extract closing price series.
         .sma(30);                           // 30 day moving average.
-    
+
     inputSeries = inputSeries
         .withSeries("sma", movingAverage)   // Integrate moving average into data, indexed on date.
         .skip(30)                           // Skip blank sma entries.
@@ -99,13 +99,13 @@ async function main() {
     await plot(equityPct, { chartType: "area", y: { label: "Equity %" }})
         .renderImage(equityCurvePctOutputFilePath);
     console.log(">> " + equityCurvePctOutputFilePath);
-        
+
     const drawdown = computeDrawdown(startingCapital, trades);
     const drawdownOutputFilePath = "output/my-drawdown.png";
     await plot(drawdown, { chartType: "area", y: { label: "Drawdown $" }})
         .renderImage(drawdownOutputFilePath);
     console.log(">> " + drawdownOutputFilePath);
-        
+
     const drawdownPctOutputFilePath = "output/my-drawdown-pct.png";
     const drawdownPct = drawdown.map(v => (v / startingCapital) * 100);
     await plot(drawdownPct, { chartType: "area", y: { label: "Drawdown %" }})
