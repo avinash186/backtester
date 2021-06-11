@@ -27,51 +27,66 @@ async function main() {
     // Add whatever indicators and signals you want to your data.
     const movingAverage = inputSeries
         .deflate(bar => bar.close)          // Extract closing price series.
-        .sma(30);                           // 30 day moving average.
+        .sma(20)
+        .bake();                           // 30 day moving average.
+
+    const exMovingAverage = inputSeries
+        .deflate(bar => bar.close)
+        .sma(5)
+        .bake();
 
     inputSeries = inputSeries
-        .withSeries("sma", movingAverage)   // Integrate moving average into data, indexed on date.
-        .skip(30);                           // Skip blank sma entries.
+        .withSeries("sma5",exMovingAverage)   // Integrate moving average into data, indexed on date.
+        .withSeries("sma20",movingAverage)
+        .skip(20)
+        .bake();                           // Skip blank sma entries.
 
-    const exma = inputSeries
+    const rsi = inputSeries
     .deflate(y => y.close)
-    .rsi(14);
+    .rsi(14)
+    .bake();
 
-    const testseries = inputSeries
-    .withSeries("rsi", exma)
-    .skip(14);
+    inputSeries = inputSeries
+    .withSeries("rsi", rsi)
+    .skip(14)
+    .bake();
 
-    testseries
-    .asCSV()
-    .writeFileSync("dataWithRSI.csv");
+    // testseries
+    // .asCSV()
+    // .writeFileSync("dataWithRSI.csv");
 
     inputSeries
     .asCSV()
-    .writeFileSync("dataWithSMA.csv");
+    .writeFileSync("updatedData.csv");
 
     // This is a very simple and very naive mean reversion strategy:
+    let enterPrice = 0;
     const strategy = {
         entryRule: (enterPosition, args) => {
-            if (args.bar.close < args.bar.sma) { // Buy when price is below average.
+            if (args.bar.sma5 < args.bar.sma20 && args.bar.rsi < "35") { // Buy when price is below average.
                 enterPosition();
+                enterPrice = args.bar.close;
             }
         },
 
         exitRule: (exitPosition, args) => {
-            if (args.bar.close > args.bar.sma) {
+            if (args.bar.sma5 > args.bar.sma20 && args.bar.rsi > "65" && enterPrice < args.bar.close) {
                 exitPosition(); // Sell when price is above average.
             }
         },
 
         stopLoss: args => { // Intrabar stop loss.
-            return args.entryPrice * (5/100); // Stop out on 5% loss from entry price.
+            return args.entryPrice * (20/100); // Stop out on 5% loss from entry price.
         },
     };
 
     console.log("Backtesting...");
 
+    //Set the backtest range
+    const range = inputSeries.tail(100);
+
     // Backtest your strategy, then compute and print metrics:
-    const trades = backtest(strategy, inputSeries);
+    const trades = backtest(strategy, range);
     console.log("The backtest conducted " + trades.length + " trades!");
 
     new dataForge.DataFrame(trades)
@@ -102,9 +117,9 @@ async function main() {
     console.log(">> " + analysisOutputFilePath);
 
     console.log("Plotting...");
-    //Visualize Original Data
-    await plot(inputSeries.tail(60).toArray(),{chartType: "line"},{y:"close"}).renderImage("output/dataset.png");
-    console.log(">> " + "output/dataset.png");
+    // Visualize Original Data
+    await plot(range.toArray(),{chartType: "line"},{y:"rsi"}).renderImage("output/RSI.png");
+    console.log(">> " + "output/RSI.png");
     // Visualize the equity curve and drawdown chart for your backtest:
     const equityCurve = computeEquityCurve(startingCapital, trades);
     const equityCurveOutputFilePath = "output/my-equity-curve.png";
