@@ -20,6 +20,8 @@ async function main() {
         .setIndex("date") // Index so we can later merge on date.
         .renameSeries({ date: "time" });
 
+    const rangeVal = 1800;
+
     // The example data file is available in the 'data' sub-directory of this repo.
 
     console.log("Computing moving average indicator.");
@@ -63,27 +65,29 @@ async function main() {
     let enterPrice = 0;
     const strategy = {
         entryRule: (enterPosition, args) => {
-            if (args.bar.sma5 < args.bar.sma20 && args.bar.rsi < "35") { // Buy when price is below average.
-                enterPosition();
+            if (args.bar.sma5 < args.bar.sma20 && args.bar.rsi < "30") { // Buy when price is below average.
                 enterPrice = args.bar.close;
+                console.log(enterPrice);
+                enterPosition();
             }
         },
 
         exitRule: (exitPosition, args) => {
-            if (args.bar.sma5 > args.bar.sma20 && args.bar.rsi > "65" && enterPrice < args.bar.close) {
+            if (args.bar.sma5 > args.bar.sma20 && args.bar.rsi > "70" && enterPrice < args.bar.close) {
+                enterPrice = 0;
                 exitPosition(); // Sell when price is above average.
             }
         },
 
         stopLoss: args => { // Intrabar stop loss.
-            return args.entryPrice * (20/100); // Stop out on 5% loss from entry price.
+            // return args.entryPrice * (5/100); // Stop out on 5% loss from entry price.
         },
     };
 
     console.log("Backtesting...");
 
     //Set the backtest range
-    const range = inputSeries.tail(100);
+    const range = inputSeries.tail(rangeVal);
 
     // Backtest your strategy, then compute and print metrics:
     const trades = backtest(strategy, range);
@@ -117,7 +121,10 @@ async function main() {
     console.log(">> " + analysisOutputFilePath);
 
     console.log("Plotting...");
-    // Visualize Original Data
+    // Visualize RSI Data
+    await plot(range.toArray(),{chartType: "line"},{y:"close"}).renderImage("output/original.png");
+    console.log(">> " + "output/original.png");
+    // Visualize RSI Data
     await plot(range.toArray(),{chartType: "line"},{y:"rsi"}).renderImage("output/RSI.png");
     console.log(">> " + "output/RSI.png");
     // Visualize the equity curve and drawdown chart for your backtest:

@@ -20,7 +20,7 @@
     "@plotex/render-image": "^1.0.15",
     "data-forge": "^1.8.11",
     "data-forge-fs": "^0.0.8",
-    "data-forge-indicators": "^0.2.5",
+    "data-forge-indicators": "^0.2.7",
     "easy-table": "^1.1.1",
     "grademark": "^0.2.9",
     "plot": "^1.0.17"
