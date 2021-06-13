@@ -29,18 +29,18 @@ async function main() {
     // Add whatever indicators and signals you want to your data.
     const movingAverage = inputSeries
         .deflate(bar => bar.close)          // Extract closing price series.
-        .sma(20)
+        .sma(50)
         .bake();                           // 30 day moving average.
 
     const exMovingAverage = inputSeries
         .deflate(bar => bar.close)
-        .sma(5)
+        .ema(9)
         .bake();
 
     inputSeries = inputSeries
         .withSeries("sma5",exMovingAverage)   // Integrate moving average into data, indexed on date.
         .withSeries("sma20",movingAverage)
-        .skip(20)
+        .skip(50)
         .bake();                           // Skip blank sma entries.
 
     const rsi = inputSeries
