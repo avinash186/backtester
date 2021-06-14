@@ -20,7 +20,7 @@ async function main() {
         .setIndex("date") // Index so we can later merge on date.
         .renameSeries({ date: "time" });
 
-    const rangeVal = 180;
+    let rangeVal = 180;
 
     // The example data file is available in the 'data' sub-directory of this repo.
 
@@ -61,18 +61,21 @@ async function main() {
     .asCSV()
     .writeFileSync("updatedData.csv");
 
+    //Get plotData
     let test = inputSeries.deflate(row => row.close);
     let test1 = inputSeries.deflate(row => row.sma5);
     let test2 = inputSeries.deflate(row => row.sma20);
 
     const data = {
-     A: test.toArray(),
-     B: test1.toArray(),
-     C: test2.toArray()
-};
-console.log(data);
-plot(data)
-     .renderImage("./myplot.png"); // Need &commat;plotex/render-image installed for this.
+     A: test.tail(rangeVal).toArray(),
+     B: test1.tail(rangeVal).toArray(),
+     C: test2.tail(rangeVal).toArray()
+    };
+
+    console.log(data);
+
+    plot(data)
+         .renderImage("myplot.png"); // Need &commat;plotex/render-image installed for this.
 
 
     // This is a very simple and very naive mean reversion strategy:
